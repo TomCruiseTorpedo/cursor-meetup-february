@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebXR Surgical Training MVP</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1a1a2e; cursor: pointer; }
+    a-scene { display: block; width: 100%; height: 100%; }
+    #load-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: sans-serif; color: #fff; text-align: center; z-index: 9999; pointer-events: none; }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var msg = document.getElementById('load-msg');
+      function hideLoadMsg() { if (msg) msg.style.display = 'none'; }
+      var scene = document.querySelector('a-scene');
+      if (scene) {
+        scene.addEventListener('loaded', hideLoadMsg);
+        setTimeout(hideLoadMsg, 4000);
+      }
+    });
+  </script>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+</head>
+<body>
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: true"
+    renderer="antialias: true; colorManagement: true; shadows: false"
+    obb-collider
+    surgical-guide
+  >
+    <a-assets></a-assets>
+
+    <a-sky color="#DCE4EC"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="8" height="8" color="#E8E8E8"></a-plane>
+    <a-plane position="0 2 -4" rotation="0 0 0" width="8" height="4" color="#B8D4E8"></a-plane>
+    <a-plane position="-4 2 0" rotation="0 90 0" width="8" height="4" color="#C5D9E8"></a-plane>
+    <a-plane position="4 2 0" rotation="0 -90 0" width="8" height="4" color="#C5D9E8"></a-plane>
+
+    <a-entity position="0 3 -1.5">
+      <a-cylinder radius="0.4" height="0.08" color="#2C3E50"></a-cylinder>
+      <a-ring radius-inner="0.35" radius-outer="0.45" color="#F4E4BC" rotation="-90 0 0" position="0 -0.05 0"></a-ring>
+      <a-cylinder radius="0.05" height="0.3" color="#34495E" position="0 0.2 0"></a-cylinder>
+    </a-entity>
+    <a-box position="0 1.2 -3.8" width="1.5" height="0.6" depth="0.1" color="#8B7355"></a-box>
+
+    <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
+    <a-entity light="type: directional; color: #FFF; intensity: 0.9" position="0 3 2" look-at="0 0 -1.2"></a-entity>
+    <a-entity light="type: point; color: #FFF; intensity: 0.4" position="0 2.5 -1.2"></a-entity>
+
+    <a-box position="0 0.5 -1.2" width="1.4" height="0.06" depth="0.9" color="#3D5A80"></a-box>
+
+    <a-entity id="cameraRig" position="0 0 0">
+      <a-camera id="camera" position="0 1.6 0" look-controls wasd-controls="enabled: false">
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .draggable" desktop-drag></a-entity>
+      </a-camera>
+      <a-entity hand-tracking-grab-controls="hand: left"></a-entity>
+      <a-entity hand-tracking-grab-controls="hand: right"></a-entity>
+      <a-entity laser-controls="hand: left"></a-entity>
+      <a-entity laser-controls="hand: right"></a-entity>
+    </a-entity>
+
+    <!-- Main step prompt - large and clear -->
+    <a-entity id="step-prompt" position="0 1.5 -1.1" text="value: STEP 1: Pick up the needle. Point, click and HOLD.; align: center; width: 4; color: #000; wrapCount: 60" look-at="#camera"></a-entity>
+
+    <!-- Step counter (e.g. "2 of 7") -->
+    <a-entity id="step-counter" position="0 1.25 -1.1" text="value: 1 of 7; align: center; width: 1.5; color: #333" look-at="#camera"></a-entity>
+
+    <!-- Release prompt - appears when needle is in zone -->
+    <a-entity id="release-zone" position="0 1.15 -1.1" visible="false" look-at="#camera">
+      <a-text value=">>> RELEASE MOUSE BUTTON NOW <<<" align="center" width="3" color="#008800"></a-text>
+    </a-entity>
+
+    <!-- Single forearm - one box, wound on front face facing user -->
+    <a-entity id="anatomy" position="0 0.55 -1.2">
+      <!-- Forearm cross-section (thick slab) - skin faces user -->
+      <a-box id="arm" width="0.5" height="0.22" depth="0.12" color="#F5DEB3" position="0 0 0"></a-box>
+      <!-- Open wound - dark red, on front face facing user -->
+      <a-plane id="wound-area" width="0.35" height="0.15" color="#6B0000" position="0 0 0.065"></a-plane>
+      <!-- Target zones - LARGE rings on the wound, same plane as drag -->
+      <a-entity id="zone-1" position="-0.12 0 0.065" visible="false">
+        <a-torus radius="0.1" radius-tubular="0.015" color="#00CC00" rotation="-90 0 0"></a-torus>
+        <a-text value="1" align="center" position="0 0.02 0" width="0.5" color="#000"></a-text>
+      </a-entity>
+      <a-entity id="zone-2" position="0.12 0 0.065" visible="false">
+        <a-torus radius="0.1" radius-tubular="0.015" color="#00CC00" rotation="-90 0 0"></a-torus>
+        <a-text value="2" align="center" position="0 0.02 0" width="0.5" color="#000"></a-text>
+      </a-entity>
+      <a-entity id="zone-3" position="0 0 0.065" visible="false">
+        <a-torus radius="0.1" radius-tubular="0.015" color="#00CC00" rotation="-90 0 0"></a-torus>
+        <a-text value="3" align="center" position="0 0.02 0" width="0.5" color="#000"></a-text>
+      </a-entity>
+    </a-entity>
+
+    <!-- Needle -->
+    <a-entity id="needle" class="draggable" position="-0.4 0.58 -1.2" grabbable>
+      <a-cylinder radius="0.01" height="0.18" color="#C0C0C0" rotation="0 0 90" position="0.07 0 0"></a-cylinder>
+      <a-cone id="needle-point" radius-bottom="0.01" height="0.05" color="#E8E8E8" rotation="0 0 -90" position="0.16 0 0"></a-cone>
+      <a-cylinder radius="0.004" height="0.12" color="#F5F5DC" rotation="0 0 90" position="-0.02 0 0"></a-cylinder>
+      <a-cylinder radius="0.03" height="0.05" color="#4A4A4A" rotation="0 0 90" position="-0.08 0 0"></a-cylinder>
+      <a-sphere radius="0.05" visible="false"></a-sphere>
+    </a-entity>
+  </a-scene>
+  <div id="load-msg">Loading…</div>
+  <script src="js/desktop-drag.js"></script>
+  <script src="js/surgical-guide.js"></script>
+</body>
+</html>
